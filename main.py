@@ -37,6 +37,17 @@ def extractHands(frame, detector):
         })
     return hands
 
+def drawBoundingBox(landmarks, width, height, pad=20):
+    xs = [lm.x * width for lm in landmarks]
+    ys = [lm.y * height for lm in landmarks]
+
+    x_min = max(int(min(xs)) - pad, 0)
+    y_min = max(int(min(ys)) - pad, 0)
+    x_max = min(int(max(xs)) + pad, width)
+    y_max = min(int(max(ys)) + pad, height)
+
+    return x_min, y_min, x_max, y_max
+
 if __name__ == "__main__":
     cap = cv2.VideoCapture(0)
     print("Kamera åpnet:", cap.isOpened())
@@ -50,6 +61,8 @@ if __name__ == "__main__":
         height, width, _ = frame.shape # mp returnerer verdier mellom 0 og 1 og ikke koordinater
 
         for h in extractHands(frame, detector):
+            x_min, y_min, x_max, y_max = drawBoundingBox(h["landmarks"], width, height)
+            cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0,255,0),2)
             print(h["hand"], h["features"].shape)
             for lm in h["landmarks"]:
                 px = int(lm.x * width)
