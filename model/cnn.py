@@ -1,10 +1,35 @@
 import os
+import numpy as np
+from PIL import Image
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
+from main import drawBoundingBox, extractHands, detector
+import cv2
+
+
+def cropToHand(frame, landmarks):
+    height, width, _ = frame.shape
+    x_min, y_min, x_max, y_max = drawBoundingBox(landmarks, width, height)
+    crop = frame[y_min:y_max, x_min:x_max]
+    if (crop.size > 0):
+        return crop
+    else:
+        return None
+
+def predict(frame_bgr, landmarks):
+    crop = cropToHand(frame_bgr, landmarks)
+    if crop is None:
+        return None
+    crop = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
+    x = transform(Image.fromarray(crop)).unsqueeze(0).to(device)
+    model.eval()
+    with torch.no_grad():
+        return model(x).argmax(1).item()
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -23,8 +48,39 @@ transform = transforms.Compose([
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
 
-train_set = torchvision.datasets.ImageFolder(TRAIN_PATH, transform=transform)
-test_set = torchvision.datasets.ImageFolder(TEST_PATH, transform=transform)
+
+
+
+class croppedHandsDataset(torch.utils.data.Dataset):
+    def __init__(self, root, transform):
+        self.base = torchvision.datasets.ImageFolder(root)
+        self.transform = transform
+        self.samples = []
+        for i in range(len(self.base)):
+            img, label = self.base[i]
+            frame = cv2.cvtColor(np.array(img.convert("RGB")), cv2.COLOR_RGB2BGR)
+            hands = extractHands(frame, detector)
+            if not hands:
+                continue
+            crop = cropToHand(frame, hands[0]["landmarks"])
+            if crop is None:
+                continue
+            crop = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
+            self.samples.append((Image.fromarray(crop), label))
+        self.classes = self.base.classes
+    
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, i):
+        img, label = self.samples[i]
+        return self.transform(img), label
+
+
+
+
+train_set = croppedHandsDataset(TRAIN_PATH, transform)
+test_set = croppedHandsDataset(TEST_PATH, transform)
 
 trainloader = torch.utils.data.DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True)
 testLoader = torch.utils.data.DataLoader(test_set, batch_size=BATCH_SIZE)
