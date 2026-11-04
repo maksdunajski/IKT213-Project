@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign Language Reader</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="layout">
+    <section class="feed">
+      <img src="{{ url_for('video_feed') }}" alt="Live camera feed with hand landmarks">
+    </section>
+
+    <aside class="panel">
+      <div class="result" aria-live="polite">
+        <h1>Predicted letter</h1>
+        <output id="letter" class="letter">–</output>
+        <div class="meter" aria-hidden="true"><div id="meter-fill" class="meter-fill"></div></div>
+        <p id="status" class="status">Waiting for the camera…</p>
+      </div>
+
+      <div class="model-picker">
+        <label for="model">Model</label>
+        <select id="model" {% if not models %}disabled{% endif %}>
+          {% for name in models %}
+          <option value="{{ name }}" {% if name == active %}selected{% endif %}>{{ name.removesuffix('.pkl') }}</option>
+          {% else %}
+          <option>No models found</option>
+          {% endfor %}
+        </select>
+        <p id="model-error" class="error" role="alert" hidden></p>
+      </div>
+    </aside>
+  </main>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
