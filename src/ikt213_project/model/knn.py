@@ -3,10 +3,13 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 import pandas as pd
 from pathlib import Path
+import pickle
 
 
 project_root = Path(__file__).resolve().parents[3]
 data_path = project_root / 'data'
+models = Path(__file__).resolve().parent
+model_path = models / 'trained_models'
 
 # Load extracted landmarks
 cols = ["label"] + [f"{axis}{i}" for i in range(21) for axis in "xyz"]
@@ -30,3 +33,5 @@ print(f"Test Accuracy (k=5): {accuracy_score(y_test, y_pred):.2f}")
 print(df["label"].unique())
 print(df["label"].nunique())
 
+with open(model_path / "knn_model.pkl", "wb") as f:
+    pickle.dump(knn, f)
