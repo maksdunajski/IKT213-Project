@@ -1,4 +1,4 @@
-from sklearn.model_selection import cross_val_score 
+from sklearn.model_selection import cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
 import pandas as pd
 from pathlib import Path
@@ -20,13 +20,13 @@ X = df.drop(columns="label")
 y = df["label"]
 
 # Cross validation testing 
-k_range = range(1, 50)
+k_range = range(1, 21)
 cv_scores = []
 
 # Evaluate each k using 5-fold cross-validation
 for k in tqdm(k_range, desc="Evaluating k"):
     knn = KNeighborsClassifier(n_neighbors=k)
-    scores = cross_val_score(knn, X, y, cv=5, scoring='accuracy')
+    scores = cross_val_score(knn, X, y, cv=5, scoring='f1_macro')
     cv_scores.append(scores.mean())
 
 # Plot accuracy vs. k
