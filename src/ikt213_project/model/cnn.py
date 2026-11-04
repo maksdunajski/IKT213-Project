@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
-from main import drawBoundingBox, extractHands, detector
+from src.ikt213_project.main import drawBoundingBox, extractHands, detector
 import cv2
 
 
